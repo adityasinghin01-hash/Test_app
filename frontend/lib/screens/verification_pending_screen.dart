@@ -25,7 +25,8 @@ class VerificationPendingScreen extends ConsumerStatefulWidget {
 }
 
 class _VerificationPendingScreenState
-    extends ConsumerState<VerificationPendingScreen> {
+    extends ConsumerState<VerificationPendingScreen>
+    with WidgetsBindingObserver {
   Timer? _pollTimer;
   bool _isResending = false;
   bool _resendSuccess = false;
@@ -36,14 +37,31 @@ class _VerificationPendingScreenState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadEmailAndStartPolling();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pollTimer?.cancel();
     _cooldownTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      // App going to background — stop polling
+      _pollTimer?.cancel();
+      _pollTimer = null;
+    } else if (state == AppLifecycleState.resumed) {
+      // App coming back — restart polling
+      if (_userEmail != null && _pollTimer == null) {
+        _startPolling();
+      }
+    }
   }
 
   // ── Init ───────────────────────────────────────────────
