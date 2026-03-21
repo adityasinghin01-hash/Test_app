@@ -3,15 +3,17 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:test_app/providers/auth_provider.dart';
+import 'package:test_app/services/token_storage.dart';
 
 /// Splash screen — shown on app launch.
 ///
-/// Purely local: [checkAuthStatus] now reads only from
-/// [FlutterSecureStorage] — zero network calls.
-/// • Token exists → `authenticated` → router sends to `/dashboard`.
-/// • No token    → `unauthenticated` → router sends to `/login`.
-/// Guaranteed < 2 seconds.
+/// Zero network calls. Reads tokens directly from
+/// [FlutterSecureStorage] and routes immediately:
+/// • Token exists → `/dashboard`
+/// • No token    → `/login`
+///
+/// The [AuthInterceptor] validates tokens lazily when
+/// the dashboard makes its first API call.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -23,39 +25,29 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    _route();
   }
 
-  Future<void> _initializeApp() async {
-    // Brief pause so branding is visible
+  Future<void> _route() async {
+    // Brief pause so branding animation is visible
     await Future.delayed(const Duration(milliseconds: 800));
 
-    // Storage-only check — no network call
-    await ref.read(authProvider.notifier).checkAuthStatus();
+    if (!mounted) return;
+
+    // Read directly from secure storage — no provider, no network
+    final hasTokens = await TokenStorage.instance.hasTokens();
+
+    if (!mounted) return;
+
+    if (hasTokens) {
+      context.go('/dashboard');
+    } else {
+      context.go('/login');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Listen for auth status changes to navigate
-    ref.listen<AuthState>(authProvider, (previous, next) {
-      if (!mounted) return;
-
-      switch (next.status) {
-        case AuthStatus.authenticated:
-          if (next.user?.isVerified == false) {
-            context.go('/verification-pending');
-          } else {
-            context.go('/dashboard');
-          }
-          break;
-        case AuthStatus.unauthenticated:
-          context.go('/login');
-          break;
-        case AuthStatus.unknown:
-          break; // Still loading
-      }
-    });
-
     return Scaffold(
       body: Container(
         width: double.infinity,
