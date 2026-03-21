@@ -6,8 +6,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:test_app/config/app_config.dart';
 import 'package:test_app/models/api_error.dart';
 import 'package:test_app/providers/auth_provider.dart';
+import 'package:test_app/services/api_client.dart';
 import 'package:test_app/services/token_storage.dart';
 import 'package:test_app/services/verification_service.dart';
 
@@ -104,7 +106,33 @@ class _VerificationPendingScreenState
       if (isVerified && mounted) {
         _pollTimer?.cancel();
 
-        // Update the user model in auth state
+        // 1. Silently get a fresh token containing isVerified: true
+        //    Otherwise the router will block dashboard access with the old token
+        final refreshToken = await TokenStorage.instance.getRefreshToken();
+        if (refreshToken != null) {
+          try {
+            final refreshResponse = await ApiClient.instance.dio.post(
+              AppConfig.refreshTokenPath,
+              data: {'refreshToken': refreshToken},
+            );
+
+            await TokenStorage.instance.saveTokens(
+              accessToken: refreshResponse.data['accessToken'],
+              refreshToken: refreshResponse.data['refreshToken'],
+            );
+          } catch (_) {
+            // If refresh fails, they logged out elsewhere — go to login
+            if (mounted) context.go('/login');
+            return;
+          }
+        } else {
+          if (mounted) context.go('/login');
+          return;
+        }
+
+        if (!mounted) return;
+
+        // 2. Update the user model in auth state
         final currentUser = ref.read(authProvider).user;
         if (currentUser != null) {
           ref
@@ -112,10 +140,11 @@ class _VerificationPendingScreenState
               .updateUser(currentUser.copyWith(isVerified: true));
         }
 
+        // 3. Finally navigate to dashboard
         context.go('/dashboard');
       }
     } on DioException catch (_) {
-      // Silently ignore polling errors — we'll retry in 5 seconds
+      // Silently ignore polling network errors — will retry in 5 seconds
     }
   }
 

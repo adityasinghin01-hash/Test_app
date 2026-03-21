@@ -4,9 +4,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:test_app/models/api_error.dart';
 import 'package:test_app/models/dashboard_model.dart';
 import 'package:test_app/providers/auth_provider.dart';
+import 'package:test_app/services/token_storage.dart';
 import 'package:test_app/services/user_service.dart';
 
 /// The main dashboard screen shown to authenticated & verified users.
@@ -32,6 +34,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Future<void> _fetchDashboard() async {
+    if (!mounted) return;
+
+    // ── Pre-flight Security Guard ─────────────────────────
+    // Failsafe in case router is bypassed: decode token and verify
+    final token = await TokenStorage.instance.getAccessToken();
+    if (token != null) {
+      try {
+        final decoded = JwtDecoder.decode(token);
+        if (decoded['isVerified'] != true) {
+          if (mounted) context.go('/verification-pending');
+          return;
+        }
+      } catch (_) {
+        if (mounted) context.go('/login');
+        return;
+      }
+    }
+
     if (!mounted) return;
     setState(() {
       _isLoading = true;

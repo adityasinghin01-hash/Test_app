@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:test_app/services/token_storage.dart';
 
 /// Splash screen — shown on app launch.
@@ -35,12 +36,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     if (!mounted) return;
 
     // Read directly from secure storage — no provider, no network
-    final hasTokens = await TokenStorage.instance.hasTokens();
+    // Read access token directly from storage
+    final token = await TokenStorage.instance.getAccessToken();
 
     if (!mounted) return;
 
-    if (hasTokens) {
-      context.go('/dashboard');
+    if (token != null) {
+      try {
+        final decodedToken = JwtDecoder.decode(token);
+        final isVerified = decodedToken['isVerified'] == true;
+
+        if (isVerified) {
+          context.go('/dashboard');
+        } else {
+          context.go('/verification-pending');
+        }
+      } catch (_) {
+        context.go('/login');
+      }
     } else {
       context.go('/login');
     }

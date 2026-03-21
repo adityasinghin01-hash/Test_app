@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:test_app/providers/auth_provider.dart';
 import 'package:test_app/screens/dashboard_screen.dart';
+import 'package:test_app/services/token_storage.dart';
 import 'package:test_app/screens/forgot_password_screen.dart';
 import 'package:test_app/screens/login_screen.dart';
 import 'package:test_app/screens/profile_screen.dart';
@@ -111,6 +113,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
+        redirect: (context, state) async {
+          // Strict guard: verify token payload directly
+          final token = await TokenStorage.instance.getAccessToken();
+          if (token == null) return '/login';
+
+          try {
+            final decoded = JwtDecoder.decode(token);
+            final isVerified = decoded['isVerified'] == true;
+            if (!isVerified) return '/verification-pending';
+          } catch (_) {
+            return '/login';
+          }
+          return null; // allow access
+        },
       ),
       GoRoute(
         path: '/profile',
