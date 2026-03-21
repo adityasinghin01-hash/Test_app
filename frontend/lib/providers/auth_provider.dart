@@ -57,39 +57,34 @@ class AuthNotifier extends StateNotifier<AuthState> {
   late final Dio _dio;
 
   // ── Check existing session (splash screen) ────────────
+  //
+  // Storage-only — NO network calls. Reads tokens from
+  // [FlutterSecureStorage] and sets [AuthStatus.authenticated]
+  // if they exist. The [AuthInterceptor] validates and refreshes
+  // tokens lazily on the first real API call.
 
   Future<void> checkAuthStatus() async {
     state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      final hasTokens = await _tokenStorage.hasTokens();
-      if (!hasTokens) {
-        state = state.copyWith(
-          status: AuthStatus.unauthenticated,
-          isLoading: false,
-        );
-        return;
-      }
 
-      // Prime the in-memory cache
-      await _tokenStorage.getAccessToken();
+    final hasTokens = await _tokenStorage.hasTokens();
 
-      // Try fetching profile to validate token
-      final response = await _dio.get(AppConfig.profilePath);
-      final user = UserModel.fromJson(response.data['user']);
-
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        user: user,
-        isLoading: false,
-      );
-    } on DioException catch (_) {
-      // Token invalid / expired and refresh also failed → unauthenticated
+    if (!hasTokens) {
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
         isLoading: false,
-        clearUser: true,
       );
+      return;
     }
+
+    // Prime the in-memory cache so the interceptor has the token
+    await _tokenStorage.getAccessToken();
+
+    // Tokens exist → trust them. The interceptor will handle
+    // 401s and force-logout if they turn out to be expired.
+    state = state.copyWith(
+      status: AuthStatus.authenticated,
+      isLoading: false,
+    );
   }
 
   // ── Login ─────────────────────────────────────────────

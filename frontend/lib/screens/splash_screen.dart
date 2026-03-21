@@ -7,9 +7,11 @@ import 'package:test_app/providers/auth_provider.dart';
 
 /// Splash screen — shown on app launch.
 ///
-/// 1. Displays animated branding.
-/// 2. Calls [AuthNotifier.checkAuthStatus] to validate stored tokens.
-/// 3. Routes to `/dashboard` (authenticated) or `/login` (unauthenticated).
+/// Purely local: [checkAuthStatus] now reads only from
+/// [FlutterSecureStorage] — zero network calls.
+/// • Token exists → `authenticated` → router sends to `/dashboard`.
+/// • No token    → `unauthenticated` → router sends to `/login`.
+/// Guaranteed < 2 seconds.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -25,10 +27,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _initializeApp() async {
-    // Let the branding animation play for a moment
-    await Future.delayed(const Duration(milliseconds: 1500));
+    // Brief pause so branding is visible
+    await Future.delayed(const Duration(milliseconds: 800));
 
-    // Check stored tokens → sets AuthStatus.authenticated or .unauthenticated
+    // Storage-only check — no network call
     await ref.read(authProvider.notifier).checkAuthStatus();
   }
 
@@ -154,7 +156,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               ),
             )
                 .animate()
-                .fadeIn(delay: 900.ms, duration: 400.ms),
+                .fadeIn(delay: 300.ms, duration: 400.ms),
           ],
         ),
       ),
