@@ -158,7 +158,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       await _tokenStorage.saveUserEmail(email);
 
-      final user = UserModel.fromJson(response.data['user']);
+      // Backend signup response may not include a 'user' object.
+      // If absent, build a minimal unverified model from the email.
+      UserModel user;
+      if (response.data['user'] is Map<String, dynamic>) {
+        user = UserModel.fromJson(response.data['user'] as Map<String, dynamic>);
+      } else {
+        user = UserModel(
+          id: '',
+          email: email,
+          isVerified: false,
+          provider: 'local',
+          createdAt: DateTime.now(),
+        );
+      }
 
       state = state.copyWith(
         status: AuthStatus.authenticated,

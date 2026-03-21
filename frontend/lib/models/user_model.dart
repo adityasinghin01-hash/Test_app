@@ -41,13 +41,15 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] as String? ?? json['_id'] as String,
+      id: json['id'] as String? ?? json['_id'] as String? ?? '',
       email: json['email'] as String,
       name: json['name'] as String?,
       picture: json['picture'] as String?,
       isVerified: json['isVerified'] as bool? ?? false,
       provider: json['provider'] as String? ?? 'local',
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
     );
   }
 
