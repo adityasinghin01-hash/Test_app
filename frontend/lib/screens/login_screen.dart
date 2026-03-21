@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:test_app/config/app_config.dart';
 import 'package:test_app/providers/auth_provider.dart';
 
 /// Login screen — email/password + Google Sign-In + reCAPTCHA v2.
@@ -57,12 +56,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await _submitLogin();
   }
 
-  /// Submit login with the test reCAPTCHA token.
+  /// Submit login with the Google test reCAPTCHA token.
+  /// Backend must have RECAPTCHA_SECRET=6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe
   Future<void> _submitLogin() async {
     await ref.read(authProvider.notifier).login(
           email: _emailController.text.trim(),
           password: _passwordController.text,
-          recaptchaToken: AppConfig.recaptchaSiteKey,
+          recaptchaToken: '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe',
         );
   }
 
