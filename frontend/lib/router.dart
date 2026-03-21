@@ -29,7 +29,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isAuth = authState.status == AuthStatus.authenticated;
       final isUnauth = authState.status == AuthStatus.unauthenticated;
       final isUnknown = authState.status == AuthStatus.unknown;
-      final isVerified = authState.user?.isVerified ?? false;
 
       final path = state.uri.path;
       final isNavigatingToAuth = path == '/login' ||
@@ -48,18 +47,27 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // 3. Authenticated user logic
       if (isAuth) {
-        // Unverified users are strictly locked to the verification screen
-        if (!isVerified && path != '/verification-pending') {
+        final bool userKnownUnverified =
+            authState.user != null && authState.user!.isVerified == false;
+        final bool userKnownVerified =
+            authState.user != null && authState.user!.isVerified == true;
+
+        // Unverified users are locked to the verification screen
+        // (only enforce when we have a user object that is explicitly unverified)
+        if (userKnownUnverified && path != '/verification-pending') {
           return '/verification-pending';
         }
 
-        // Verified users trying to access auth screens or verification screen -> go to dashboard
-        if (isVerified &&
+        // Verified users trying to access auth/splash/verification → go to dashboard
+        if (userKnownVerified &&
             (isNavigatingToAuth ||
                 path == '/verification-pending' ||
                 path == '/')) {
           return '/dashboard';
         }
+
+        // user is null (splash → dashboard with tokens) → allow navigation
+        // The dashboard will fetch user data; interceptor handles invalid tokens
       }
 
       // No redirect needed
