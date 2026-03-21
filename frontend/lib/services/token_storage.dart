@@ -42,6 +42,23 @@ class TokenStorage {
     ]);
   }
 
+  Future<void> saveAccessToken(String token) async {
+    _cachedAccessToken = token;
+    await _storage.write(key: _accessTokenKey, value: token);
+  }
+
+  Future<void> saveRefreshToken(String token) async {
+    await _storage.write(key: _refreshTokenKey, value: token);
+  }
+
+  Future<void> saveIsVerified(String value) async {
+    await _storage.write(key: 'isVerified', value: value);
+  }
+
+  Future<String?> getIsVerified() async {
+    return await _storage.read(key: 'isVerified');
+  }
+
   /// Read the access token from secure storage and prime the cache.
   Future<String?> getAccessToken() async {
     _cachedAccessToken = await _storage.read(key: _accessTokenKey);

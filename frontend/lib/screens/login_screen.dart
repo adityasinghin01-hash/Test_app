@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:test_app/providers/auth_provider.dart';
+import 'package:test_app/services/api_client.dart';
 
 /// Login screen — email/password + Google Sign-In + reCAPTCHA v2.
 ///
@@ -28,6 +29,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
   bool _isGoogleLoading = false;
   bool _recaptchaChecked = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -53,7 +55,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
       return;
     }
-    await _submitLogin();
+
+    try {
+      setState(() => _isLoading = true);
+      
+      final dio = ApiClient.instance.dio;
+      dio.options.connectTimeout = const Duration(seconds: 15);
+      dio.options.receiveTimeout = const Duration(seconds: 15);
+
+      await _submitLogin();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   /// Submit login with the Google test reCAPTCHA token.
@@ -69,8 +92,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   // ── Google Sign-In Flow ────────────────────────────────
 
   Future<void> _handleGoogleLogin() async {
-    setState(() => _isGoogleLoading = true);
     try {
+      setState(() => _isGoogleLoading = true);
+      
+      final dio = ApiClient.instance.dio;
+      dio.options.connectTimeout = const Duration(seconds: 15);
+      dio.options.receiveTimeout = const Duration(seconds: 15);
+
       final googleSignIn = GoogleSignIn(scopes: ['email']);
       final account = await googleSignIn.signIn();
       if (account == null) {
@@ -116,8 +144,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-    final isFormLoading = authState.isLoading && !_isGoogleLoading;
+    final isFormLoading = _isLoading;
 
     // ── Listener: navigate on auth changes ────────────────
     ref.listen<AuthState>(authProvider, (previous, next) {

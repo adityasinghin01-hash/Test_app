@@ -36,11 +36,22 @@ class _VerificationPendingScreenState
   int _resendCooldown = 0;
   Timer? _cooldownTimer;
 
+  bool _isInitialLoading = true;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadEmailAndStartPolling();
+    
+    // Show the gorgeous loading state for 2.5 seconds
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) {
+        setState(() {
+          _isInitialLoading = false;
+        });
+      }
+    });
   }
 
   @override
@@ -120,6 +131,7 @@ class _VerificationPendingScreenState
               accessToken: refreshResponse.data['accessToken'],
               refreshToken: refreshResponse.data['refreshToken'],
             );
+            await TokenStorage.instance.saveIsVerified('true');
           } catch (_) {
             // If refresh fails, they logged out elsewhere — go to login
             if (mounted) context.go('/login');
@@ -232,188 +244,249 @@ class _VerificationPendingScreenState
               children: [
                 const Spacer(flex: 2),
 
-                // ── Mail Icon ────────────────────────────────
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6C63FF), Color(0xFF3F8EFC)],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
-                        blurRadius: 30,
-                        offset: const Offset(0, 10),
+                if (_isInitialLoading) ...[
+                  // ── Sending Email Animation ─────────────────
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF6C63FF), Color(0xFF3F8EFC)],
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.mark_email_unread_rounded,
-                    size: 44,
-                    color: Colors.white,
-                  ),
-                )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .scaleXY(
-                      begin: 1.0,
-                      end: 1.05,
-                      duration: 2000.ms,
-                      curve: Curves.easeInOut,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
+                          blurRadius: 30,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
-
-                const SizedBox(height: 36),
-
-                // ── Title ────────────────────────────────────
-                Text(
-                  'Check Your Email',
-                  style: GoogleFonts.outfit(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ).animate().fadeIn(delay: 200.ms),
-
-                const SizedBox(height: 12),
-
-                // ── Subtitle ─────────────────────────────────
-                Text(
-                  _userEmail != null
-                      ? 'We sent a verification link to\n$_userEmail'
-                      : 'We sent a verification link to your email',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    color: Colors.white.withValues(alpha: 0.5),
-                    height: 1.5,
-                  ),
-                ).animate().fadeIn(delay: 300.ms),
-
-                const SizedBox(height: 40),
-
-                // ── Status Card ──────────────────────────────
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
+                    child: const Center(
+                      child: SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    children: [
-                      // Polling indicator
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                const Color(0xFF6C63FF).withValues(alpha: 0.7),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Waiting for verification…',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: Colors.white.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ],
+                  )
+                      .animate()
+                      .fadeIn(duration: 400.ms)
+                      .scaleXY(
+                        begin: 0.8,
+                        end: 1.0,
+                        curve: Curves.easeOutBack,
+                        duration: 600.ms,
                       ),
 
-                      const SizedBox(height: 20),
+                  const SizedBox(height: 36),
 
-                      // Resend button
-                      if (_resendSuccess && _resendCooldown > 0) ...[
+                  Text(
+                    'Sending Email...',
+                    style: GoogleFonts.outfit(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ).animate().fadeIn(delay: 200.ms),
+
+                  const SizedBox(height: 12),
+
+                  Text(
+                    'We\'re sending your verification email,\nplease wait...',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      color: Colors.white.withValues(alpha: 0.6),
+                      height: 1.5,
+                    ),
+                  ).animate().fadeIn(delay: 300.ms),
+                ] else ...[
+                  // ── Mail Icon ────────────────────────────────
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF6C63FF), Color(0xFF3F8EFC)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
+                          blurRadius: 30,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.mark_email_unread_rounded,
+                      size: 44,
+                      color: Colors.white,
+                    ),
+                  )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .scaleXY(
+                        begin: 1.0,
+                        end: 1.05,
+                        duration: 2000.ms,
+                        curve: Curves.easeInOut,
+                      ),
+
+                  const SizedBox(height: 36),
+
+                  // ── Title ────────────────────────────────────
+                  Text(
+                    'Check Your Email',
+                    style: GoogleFonts.outfit(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ).animate().fadeIn(duration: 400.ms),
+
+                  const SizedBox(height: 12),
+
+                  // ── Subtitle ─────────────────────────────────
+                  Text(
+                    _userEmail != null
+                        ? 'We sent a verification link to\n$_userEmail'
+                        : 'We sent a verification link to your email',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      color: Colors.white.withValues(alpha: 0.5),
+                      height: 1.5,
+                    ),
+                  ).animate().fadeIn(delay: 100.ms),
+
+                  const SizedBox(height: 40),
+
+                  // ── Status Card ──────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        // Polling indicator
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
-                              Icons.check_circle_rounded,
-                              color: Color(0xFF4CAF50),
-                              size: 20,
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  const Color(0xFF6C63FF).withValues(alpha: 0.7),
+                                ),
+                              ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 12),
                             Text(
-                              'Email sent! Resend in ${_resendCooldown}s',
+                              'Waiting for verification…',
                               style: GoogleFonts.inter(
-                                fontSize: 13,
-                                color: const Color(0xFF4CAF50),
-                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                                color: Colors.white.withValues(alpha: 0.6),
                               ),
                             ),
                           ],
                         ),
-                      ] else ...[
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: OutlinedButton(
-                            onPressed: (_isResending || _resendCooldown > 0)
-                                ? null
-                                : _handleResend,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF6C63FF),
-                              side: BorderSide(
-                                color: const Color(0xFF6C63FF)
-                                    .withValues(alpha: 0.3),
+
+                        const SizedBox(height: 20),
+
+                        // Resend button
+                        if (_resendSuccess && _resendCooldown > 0) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: Color(0xFF4CAF50),
+                                size: 20,
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Email sent! Resend in ${_resendCooldown}s',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: const Color(0xFF4CAF50),
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                            child: _isResending
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF6C63FF),
+                            ],
+                          ),
+                        ] else ...[
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: OutlinedButton(
+                              onPressed: (_isResending || _resendCooldown > 0)
+                                  ? null
+                                  : _handleResend,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF6C63FF),
+                                side: BorderSide(
+                                  color: const Color(0xFF6C63FF)
+                                      .withValues(alpha: 0.3),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              child: _isResending
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          Color(0xFF6C63FF),
+                                        ),
+                                      ),
+                                    )
+                                  : Text(
+                                      'Resend Verification Email',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                  )
-                                : Text(
-                                    'Resend Verification Email',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                            ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
-                  ),
-                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1, end: 0),
+                    ),
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
 
-                const Spacer(flex: 2),
+                  const Spacer(flex: 2),
 
-                // ── Back to Login ────────────────────────────
-                TextButton(
-                  onPressed: () async {
-                    _pollTimer?.cancel();
-                    await ref.read(authProvider.notifier).logout();
-                    if (context.mounted) context.go('/login');
-                  },
-                  child: Text(
-                    'Back to Login',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.white.withValues(alpha: 0.4),
-                      fontWeight: FontWeight.w500,
+                  // ── Back to Login ────────────────────────────
+                  TextButton(
+                    onPressed: () async {
+                      _pollTimer?.cancel();
+                      await ref.read(authProvider.notifier).logout();
+                      if (context.mounted) context.go('/login');
+                    },
+                    child: Text(
+                      'Back to Login',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.white.withValues(alpha: 0.4),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
+                ],
 
                 const SizedBox(height: 24),
               ],

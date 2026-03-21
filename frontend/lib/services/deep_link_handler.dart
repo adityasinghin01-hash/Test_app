@@ -3,6 +3,7 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_app/router.dart';
+import 'package:test_app/services/token_storage.dart';
 
 /// Service to handle incoming deep links using the `app_links` package.
 ///
@@ -54,18 +55,37 @@ class DeepLinkHandler {
   void _handleUri(Uri uri, ProviderContainer container) {
     debugPrint('Received deep link: $uri');
 
-    // Extract path and query parameters
-    final path = uri.path;
+    // For custom schemes (myapp://), the first segment is parsed as the host.
+    // For universal links (https://myapp.com/path), it's in the path.
+    String routePath = uri.path;
+    if (uri.scheme == 'myapp' && uri.host.isNotEmpty) {
+      routePath = '/${uri.host}$routePath';
+    }
+
     final query = uri.query;
 
     // Construct the GoRouter path: e.g. "/reset-password?token=123"
-    final fullPath = query.isEmpty ? path : '$path?$query';
+    final fullPath = query.isEmpty ? routePath : '$routePath?$query';
 
     // Guard against empty paths from weird link formatting
     if (fullPath.isEmpty || fullPath == '/') return;
 
     // Use the global navigator key configured in router.dart to navigate
     final router = container.read(routerProvider);
+
+    // Handle verification redirects
+    if (fullPath.startsWith('/dashboard')) {
+      TokenStorage.instance.saveIsVerified('true').then((_) {
+        router.go('/dashboard');
+      });
+      return;
+    }
+    
+    if (fullPath.startsWith('/verification-pending')) {
+      router.go('/verification-pending');
+      return;
+    }
+
     router.go(fullPath);
   }
 }

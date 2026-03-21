@@ -152,10 +152,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final accessToken = response.data['accessToken'] as String;
       final refreshToken = response.data['refreshToken'] as String;
 
-      await _tokenStorage.saveTokens(
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-      );
+      await _tokenStorage.saveAccessToken(accessToken);
+      await _tokenStorage.saveRefreshToken(refreshToken);
+      await _tokenStorage.saveIsVerified('false');
       await _tokenStorage.saveUserEmail(email);
 
       // Backend signup response may not include a 'user' object.
@@ -258,6 +257,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Best effort — even if backend call fails, still clear local state
     } finally {
       await _tokenStorage.clearAll();
+      await _tokenStorage.saveIsVerified('false');
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
   }
@@ -266,6 +266,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   void _handleForceLogout() {
     _tokenStorage.clearAll();
+    _tokenStorage.saveIsVerified('false');
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 

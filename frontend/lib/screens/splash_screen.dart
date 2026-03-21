@@ -30,31 +30,36 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _route() async {
-    // Brief pause so branding animation is visible
     await Future.delayed(const Duration(milliseconds: 800));
-
     if (!mounted) return;
-
-    // Read directly from secure storage — no provider, no network
-    // Read access token directly from storage
+    
     final token = await TokenStorage.instance.getAccessToken();
-
-    if (!mounted) return;
-
-    if (token != null) {
-      try {
-        final decodedToken = JwtDecoder.decode(token);
-        final isVerified = decodedToken['isVerified'] == true;
-
-        if (isVerified) {
-          context.go('/dashboard');
-        } else {
-          context.go('/verification-pending');
-        }
-      } catch (_) {
-        context.go('/login');
+    if (token == null) {
+      context.go('/login');
+      return;
+    }
+    
+    try {
+      // Check expiry first
+      final bool isExpired = JwtDecoder.isExpired(token);
+      bool isVerified;
+      if (isExpired) {
+        // Read from storage directly — do not decode expired token
+        final stored = await TokenStorage.instance.getIsVerified();
+        isVerified = stored == 'true';
+      } else {
+        final decoded = JwtDecoder.decode(token);
+        isVerified = decoded['isVerified'] == true;
       }
-    } else {
+      
+      if (!mounted) return;
+      
+      if (isVerified) {
+        context.go('/dashboard');
+      } else {
+        context.go('/verification-pending');
+      }
+    } catch (_) {
       context.go('/login');
     }
   }

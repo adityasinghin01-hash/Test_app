@@ -36,7 +36,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isNavigatingToAuth = path == '/login' ||
           path == '/signup' ||
           path == '/forgot-password' ||
-          path == '/reset-password';
+          path == '/reset-password' ||
+          path == '/verification-pending';
 
       // 1. App is starting up -> stay on splash
       if (isUnknown && path == '/') return null;
