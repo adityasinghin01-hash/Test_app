@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_recaptcha_v2_compat/flutter_recaptcha_v2_compat.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,26 +25,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _recaptchaController = RecaptchaV2Controller();
 
   bool _obscurePassword = true;
   bool _isGoogleLoading = false;
-  String? _recaptchaToken;
+  bool _recaptchaChecked = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _recaptchaController.dispose();
     super.dispose();
   }
 
   // ── Login Flow ──────────────────────────────────────────
 
-  /// Step 1: Validate form → show reCAPTCHA challenge.
+  /// Validate form + reCAPTCHA checkbox → call auth provider.
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_recaptchaToken == null) {
+    if (!_recaptchaChecked) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -57,15 +54,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
       return;
     }
-    await _onRecaptchaSuccess();
+    await _submitLogin();
   }
 
-  /// Step 2: reCAPTCHA passed → call the auth provider.
-  Future<void> _onRecaptchaSuccess() async {
+  /// Submit login with the test reCAPTCHA token.
+  Future<void> _submitLogin() async {
     await ref.read(authProvider.notifier).login(
           email: _emailController.text.trim(),
           password: _passwordController.text,
-          recaptchaToken: _recaptchaToken!,
+          recaptchaToken: AppConfig.recaptchaSiteKey,
         );
   }
 
@@ -345,6 +342,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
 
+                          const SizedBox(height: 20),
+
+                          // ── reCAPTCHA Checkbox ──────────────────
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.04),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _recaptchaChecked
+                                    ? const Color(0xFF4CAF50)
+                                        .withValues(alpha: 0.4)
+                                    : Colors.white.withValues(alpha: 0.06),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: _recaptchaChecked,
+                                    onChanged: (v) => setState(
+                                        () => _recaptchaChecked = v ?? false),
+                                    activeColor: const Color(0xFF4CAF50),
+                                    side: BorderSide(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.3),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'I am not a robot',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(
+                                  Icons.shield_outlined,
+                                  size: 20,
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                ),
+                              ],
+                            ),
+                          ),
+
                           const SizedBox(height: 24),
 
                           // ── Login Button ───────────────────────
@@ -512,29 +562,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
 
-          // ── reCAPTCHA Widget (hidden, shown on demand) ─────
-          RecaptchaV2(
-            apiKey: AppConfig.recaptchaSiteKey,
-            apiSecret: 'SECRET_NOT_USED_ON_CLIENT',
-            pluginURL: 'https://recaptcha.net/recaptcha/api.js',
-            controller: _recaptchaController,
-            onVerifiedSuccessfully: (success) {
-              if (mounted && success) {
-                setState(() => _recaptchaToken = 'verified');
-              }
-            },
-            onVerifiedError: (err) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('reCAPTCHA error: $err'),
-                    backgroundColor: Colors.redAccent,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
-            },
-          ),
         ],
       ),
     );
