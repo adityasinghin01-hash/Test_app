@@ -206,7 +206,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
         refreshToken: refreshToken,
       );
 
-      final user = UserModel.fromJson(response.data['user']);
+      // Backend google-login may omit fields — build safely.
+      // Google users are always verified.
+      UserModel user;
+      if (response.data['user'] is Map<String, dynamic>) {
+        user = UserModel.fromJson(response.data['user'] as Map<String, dynamic>);
+      } else {
+        user = UserModel(
+          id: '',
+          email: '',
+          isVerified: true,
+          provider: 'google',
+          createdAt: DateTime.now(),
+        );
+      }
+
       await _tokenStorage.saveUserEmail(user.email);
 
       state = state.copyWith(
@@ -218,6 +232,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(
         isLoading: false,
         errorMessage: _extractErrorMessage(e),
+      );
+    } catch (e) {
+      // Catch parsing errors (TypeError etc.) so they don't crash silently
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Google Sign-In failed. Please try again.',
       );
     }
   }
