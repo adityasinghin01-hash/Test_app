@@ -21,11 +21,11 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 // Wraps authProvider so GoRouter can listen to it WITHOUT
 // recreating the entire router on every state change.
 class _AuthNotifierListenable extends ChangeNotifier {
-  _AuthNotifierListenable(this._ref) {
-    _ref.listen<AuthState>(authProvider, (_, __) => notifyListeners());
+  _AuthNotifierListenable(this.ref) {
+    ref.listen<AuthState>(authProvider, (_, __) => notifyListeners());
   }
-  final Ref _ref;
-  AuthState get authState => _ref.read(authProvider);
+  final Ref ref;
+  AuthState get authState => ref.read(authProvider);
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
