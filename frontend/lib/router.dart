@@ -49,6 +49,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           path == '/signup' ||
           path == '/forgot-password' ||
           path == '/reset-password' ||
+          path == '/otp-verification' ||
           path == '/verification-pending';
 
       // 1. App is starting up OR loading → stay put, no redirect
