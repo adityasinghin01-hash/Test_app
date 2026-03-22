@@ -25,6 +25,8 @@ class AppConfig {
   // ── Password reset ────────────────────────────────────
   static const String forgotPasswordPath = '/api/forgot-password';
   static const String resetPasswordPath = '/api/reset-password';
+  static const String sendOtpPath = '/api/send-otp';
+  static const String verifyOtpPath = '/api/verify-otp';
 
   // ── Protected resources ───────────────────────────────
   static const String profilePath = '/api/profile';

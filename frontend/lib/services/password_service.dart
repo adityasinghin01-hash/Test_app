@@ -37,4 +37,28 @@ class PasswordService {
       },
     );
   }
+
+  /// `POST /api/send-otp`
+  /// Sends a 6-digit OTP to the user's email for password reset.
+  Future<Response> sendOtp({required String email}) {
+    return _dio.post(
+      AppConfig.sendOtpPath,
+      data: {'email': email},
+    );
+  }
+
+  /// `POST /api/verify-otp`
+  /// Verifies the OTP and returns a resetToken on success.
+  Future<Response> verifyOtp({
+    required String email,
+    required String otp,
+  }) {
+    return _dio.post(
+      AppConfig.verifyOtpPath,
+      data: {
+        'email': email,
+        'otp': otp,
+      },
+    );
+  }
 }

@@ -23,6 +23,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   bool _isLoading = false;
   bool _isSuccess = false;
+  String _submittedEmail = '';
 
   @override
   void dispose() {
@@ -35,20 +36,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     setState(() {
       _isLoading = true;
-      _isSuccess = false; // Reset success state
+      _isSuccess = false;
     });
 
     try {
-      await PasswordService.instance.forgotPassword(
+      await PasswordService.instance.sendOtp(
         email: _emailController.text.trim(),
       );
 
-      // Backend returns a generic success message to prevent email enumeration.
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _submittedEmail = _emailController.text.trim();
           _isSuccess = true;
         });
+        // Navigate to OTP screen
+        context.go(
+          '/otp-verification',
+          extra: _emailController.text.trim(),
+        );
       }
     } on DioException catch (e) {
       if (mounted) {
@@ -284,7 +290,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                     )
                   : Text(
-                      'Send Instructions',
+                      'Send Code',
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

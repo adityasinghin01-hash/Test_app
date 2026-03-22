@@ -12,6 +12,7 @@ import 'package:test_app/screens/reset_password_screen.dart';
 import 'package:test_app/screens/signup_screen.dart';
 import 'package:test_app/screens/splash_screen.dart';
 import 'package:test_app/screens/verification_pending_screen.dart';
+import 'package:test_app/screens/otp_verification_screen.dart';
 
 // ── Global Navigator Key ────────────────────────────────
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -103,8 +104,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reset-password',
         builder: (context, state) {
-          final token = state.uri.queryParameters['token'] ?? '';
+          // Accepts token from GoRouter extra (OTP flow) OR query param (deep link fallback)
+          final token = (state.extra as String?) ??
+              state.uri.queryParameters['token'] ??
+              '';
           return ResetPasswordScreen(token: token);
+        },
+      ),
+      GoRoute(
+        path: '/otp-verification',
+        builder: (context, state) {
+          final email = (state.extra as String?) ?? '';
+          return OtpVerificationScreen(email: email);
         },
       ),
       GoRoute(
