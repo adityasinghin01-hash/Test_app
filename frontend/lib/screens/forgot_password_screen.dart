@@ -23,7 +23,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   bool _isLoading = false;
   bool _isSuccess = false;
-  String _submittedEmail = '';
 
   @override
   void dispose() {
@@ -47,7 +46,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _submittedEmail = _emailController.text.trim();
           _isSuccess = true;
         });
         // Navigate to OTP screen

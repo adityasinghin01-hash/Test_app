@@ -61,10 +61,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     try {
       setState(() => _isLoading = true);
-      
-      final dio = ApiClient.instance.dio;
-      dio.options.connectTimeout = const Duration(seconds: 60);
-      dio.options.receiveTimeout = const Duration(seconds: 60);
 
       await _submitSignup();
     } catch (e) {
@@ -126,8 +122,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     });
 
     return Scaffold(
-      body: Stack(
-        children: [
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) context.go('/login');
+        },
+        child: Stack(
+          children: [
           // ── Background ─────────────────────────────────────
           Container(
             width: double.infinity,
@@ -449,6 +450,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           ),
 
         ],
+      ),
       ),
     );
   }

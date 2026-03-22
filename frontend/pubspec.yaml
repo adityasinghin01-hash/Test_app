@@ -31,7 +31,6 @@ dependencies:
   app_links: ^6.3.3
 
   # reCAPTCHA v2 for signup and login
-  flutter_recaptcha_v2_compat: ^1.0.0
 
   # Environment variables
   flutter_dotenv: ^5.2.1
@@ -40,10 +39,8 @@ dependencies:
   jwt_decoder: ^2.0.1
 
   # SVG support
-  flutter_svg: ^2.0.17
 
   # Loading skeletons
-  shimmer: ^3.0.0
 
   # Typography
   google_fonts: ^6.2.1

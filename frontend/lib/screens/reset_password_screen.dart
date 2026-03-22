@@ -81,7 +81,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) context.go('/login');
+        },
+        child: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
@@ -104,13 +109,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 // ── Back Button (Only if not success) ──────────
                 if (!_isSuccess)
                   IconButton(
-                    onPressed: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go('/login');
-                      }
-                    },
+                    onPressed: () => context.go('/login'),
                     icon: const Icon(
                       Icons.arrow_back_rounded,
                       color: Colors.white,
@@ -197,6 +196,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
