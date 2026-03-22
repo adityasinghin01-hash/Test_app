@@ -109,13 +109,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 // ── Back Button (Only if not success) ──────────
                 if (!_isSuccess)
                   IconButton(
-                    onPressed: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go('/login');
-                      }
-                    },
+                    onPressed: () => context.go('/login'),
                     icon: const Icon(
                       Icons.arrow_back_rounded,
                       color: Colors.white,

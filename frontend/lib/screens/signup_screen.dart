@@ -61,10 +61,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     try {
       setState(() => _isLoading = true);
-      
-      final dio = ApiClient.instance.dio;
-      dio.options.connectTimeout = const Duration(seconds: 60);
-      dio.options.receiveTimeout = const Duration(seconds: 60);
 
       await _submitSignup();
     } catch (e) {

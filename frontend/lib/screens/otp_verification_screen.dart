@@ -10,7 +10,7 @@ import 'package:test_app/services/password_service.dart';
 /// OTP Verification screen for password reset.
 ///
 /// Receives [email] via GoRouter extra.
-/// User enters 6-digit code → reCAPTCHA checkbox → Verify button.
+/// User enters 5-digit code → reCAPTCHA checkbox → Verify button.
 /// On success → navigates to /reset-password with resetToken.
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
@@ -251,7 +251,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   ),
                   child: Column(
                     children: [
-                      // ── 6 OTP boxes ──────────────────────────
+                      // ── 5 OTP boxes ──────────────────────────
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: List.generate(5, (i) => _buildOtpBox(i)),
