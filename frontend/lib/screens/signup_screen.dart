@@ -126,8 +126,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     });
 
     return Scaffold(
-      body: Stack(
-        children: [
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) context.go('/login');
+        },
+        child: Stack(
+          children: [
           // ── Background ─────────────────────────────────────
           Container(
             width: double.infinity,
@@ -449,6 +454,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           ),
 
         ],
+      ),
       ),
     );
   }
