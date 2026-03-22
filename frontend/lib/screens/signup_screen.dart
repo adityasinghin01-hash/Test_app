@@ -63,8 +63,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       setState(() => _isLoading = true);
       
       final dio = ApiClient.instance.dio;
-      dio.options.connectTimeout = const Duration(seconds: 15);
-      dio.options.receiveTimeout = const Duration(seconds: 15);
+      dio.options.connectTimeout = const Duration(seconds: 60);
+      dio.options.receiveTimeout = const Duration(seconds: 60);
 
       await _submitSignup();
     } catch (e) {
@@ -99,8 +99,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       setState(() => _isGoogleLoading = true);
       
       final dio = ApiClient.instance.dio;
-      dio.options.connectTimeout = const Duration(seconds: 15);
-      dio.options.receiveTimeout = const Duration(seconds: 15);
+      dio.options.connectTimeout = const Duration(seconds: 60);
+      dio.options.receiveTimeout = const Duration(seconds: 60);
 
       final googleSignIn = GoogleSignIn(scopes: ['email']);
       final account = await googleSignIn.signIn();

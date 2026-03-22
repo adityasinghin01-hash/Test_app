@@ -74,6 +74,14 @@ class DeepLinkHandler {
     final router = container.read(routerProvider);
 
     // Handle verification redirects
+    if (fullPath.startsWith('/reset-password')) {
+      final token = uri.queryParameters['token'] ?? '';
+      if (token.isNotEmpty) {
+        router.go('/reset-password?token=$token');
+      }
+      return;
+    }
+
     if (fullPath.startsWith('/dashboard')) {
       TokenStorage.instance.saveIsVerified('true').then((_) {
         router.go('/dashboard');

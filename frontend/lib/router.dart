@@ -16,21 +16,32 @@ import 'package:test_app/screens/verification_pending_screen.dart';
 // ── Global Navigator Key ────────────────────────────────
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Riverpod provider for the GoRouter instance.
-///
-/// Reacts to changes in [authProvider] to automatically redirect
-/// users based on their authentication and verification status.
+// ── Auth Listenable ─────────────────────────────────────
+// Wraps authProvider so GoRouter can listen to it WITHOUT
+// recreating the entire router on every state change.
+class _AuthNotifierListenable extends ChangeNotifier {
+  _AuthNotifierListenable(this._ref) {
+    _ref.listen<AuthState>(authProvider, (_, __) => notifyListeners());
+  }
+  final Ref _ref;
+  AuthState get authState => _ref.read(authProvider);
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final listenable = _AuthNotifierListenable(ref);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/',
+    refreshListenable: listenable,
+
     // ── Redirect Logic ──────────────────────────────────
     redirect: (context, state) {
+      final authState = listenable.authState;
       final isAuth = authState.status == AuthStatus.authenticated;
       final isUnauth = authState.status == AuthStatus.unauthenticated;
       final isUnknown = authState.status == AuthStatus.unknown;
+      final isLoading = authState.isLoading;
 
       final path = state.uri.path;
       final isNavigatingToAuth = path == '/login' ||
@@ -39,11 +50,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           path == '/reset-password' ||
           path == '/verification-pending';
 
-      // 1. App is starting up -> stay on splash
-      if (isUnknown && path == '/') return null;
+      // 1. App is starting up OR loading → stay put, no redirect
+      if (isUnknown || isLoading) return null;
 
-      // 2. Unauthenticated user trying to access protected route -> go to login
-      // (Exception: reset-password deep links are allowed for unauth users)
+      // 2. Unauthenticated → protect routes
       if (isUnauth && !isNavigatingToAuth && path != '/') {
         return '/login';
       }
@@ -55,36 +65,29 @@ final routerProvider = Provider<GoRouter>((ref) {
         final bool userKnownVerified =
             authState.user != null && authState.user!.isVerified == true;
 
-        // Unverified users are locked to the verification screen
-        // (only enforce when we have a user object that is explicitly unverified)
+        // Unverified → lock to verification screen
         if (userKnownUnverified && path != '/verification-pending') {
           return '/verification-pending';
         }
 
-        // Verified users trying to access auth/splash/verification → go to dashboard
+        // Verified → kick off auth/splash screens to dashboard
         if (userKnownVerified &&
             (isNavigatingToAuth ||
                 path == '/verification-pending' ||
                 path == '/')) {
           return '/dashboard';
         }
-
-        // user is null (splash → dashboard with tokens) → allow navigation
-        // The dashboard will fetch user data; interceptor handles invalid tokens
       }
 
-      // No redirect needed
       return null;
     },
+
     // ── Routes ──────────────────────────────────────────
     routes: [
-      // Splash (Entry Point)
       GoRoute(
         path: '/',
         builder: (context, state) => const SplashScreen(),
       ),
-
-      // Auth Flow
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
@@ -100,7 +103,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reset-password',
         builder: (context, state) {
-          // Deep links come in as /reset-password?token=XYZ
           final token = state.uri.queryParameters['token'] ?? '';
           return ResetPasswordScreen(token: token);
         },
@@ -109,24 +111,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/verification-pending',
         builder: (context, state) => const VerificationPendingScreen(),
       ),
-
-      // Protected UI
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
         redirect: (context, state) async {
-          // Strict guard: verify token payload directly
           final token = await TokenStorage.instance.getAccessToken();
           if (token == null) return '/login';
-
           try {
             final decoded = JwtDecoder.decode(token);
-            final isVerified = decoded['isVerified'] == true;
-            if (!isVerified) return '/verification-pending';
+            if (decoded['isVerified'] != true) return '/verification-pending';
           } catch (_) {
             return '/login';
           }
-          return null; // allow access
+          return null;
         },
       ),
       GoRoute(
