@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+
 import 'package:test_app/providers/auth_provider.dart';
 import 'package:test_app/services/api_client.dart';
 
@@ -29,7 +29,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _isGoogleLoading = false;
+
   bool _recaptchaChecked = false;
   bool _isLoading = false;
 
@@ -92,55 +92,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         );
   }
 
-  // ── Google Sign-In Flow ────────────────────────────────
-
-  Future<void> _handleGoogleLogin() async {
-    try {
-      setState(() => _isGoogleLoading = true);
-      
-      final dio = ApiClient.instance.dio;
-      dio.options.connectTimeout = const Duration(seconds: 60);
-      dio.options.receiveTimeout = const Duration(seconds: 60);
-
-      final googleSignIn = GoogleSignIn(scopes: ['email']);
-      final account = await googleSignIn.signIn();
-      if (account == null) {
-        setState(() => _isGoogleLoading = false);
-        return;
-      }
-
-      final auth = await account.authentication;
-      final idToken = auth.idToken;
-
-      if (idToken == null) {
-        setState(() => _isGoogleLoading = false);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Google Sign-In failed: no ID token received.'),
-              backgroundColor: Colors.redAccent,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-        return;
-      }
-
-      await ref.read(authProvider.notifier).googleLogin(idToken: idToken);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Google Sign-In error: ${e.toString()}'),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isGoogleLoading = false);
-    }
-  }
 
   // ── Build ──────────────────────────────────────────────
 
@@ -462,93 +413,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       .fadeIn(delay: 400.ms, duration: 500.ms)
                       .slideY(begin: 0.08, end: 0),
 
-                  const SizedBox(height: 32),
-
-                  // ── OR Divider ─────────────────────────────────
-                  Row(
-                    children: [
-                      Expanded(
-                        child:
-                            Divider(color: Colors.white.withValues(alpha: 0.08)),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'OR',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.25),
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child:
-                            Divider(color: Colors.white.withValues(alpha: 0.08)),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // ── Google Sign-In Button ──────────────────────
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: OutlinedButton(
-                      onPressed: _isGoogleLoading ? null : _handleGoogleLogin,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.1)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: _isGoogleLoading
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white),
-                              ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Center(
-                                    child: Text(
-                                      'G',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF4285F4),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Join with Google',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ).animate().fadeIn(delay: 500.ms, duration: 400.ms),
 
                   const SizedBox(height: 40),
 

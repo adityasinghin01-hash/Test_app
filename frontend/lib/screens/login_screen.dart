@@ -99,7 +99,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       dio.options.connectTimeout = const Duration(seconds: 15);
       dio.options.receiveTimeout = const Duration(seconds: 15);
 
-      final googleSignIn = GoogleSignIn(scopes: ['email']);
+      final googleSignIn = GoogleSignIn(
+        scopes: ['email'],
+        serverClientId: '372839860832-337t9faf6buljoi8i9tgavoavrrtom1m.apps.googleusercontent.com',
+      );
+      await googleSignIn.signOut(); // Force account picker every time
       final account = await googleSignIn.signIn();
       if (account == null) {
         // User cancelled

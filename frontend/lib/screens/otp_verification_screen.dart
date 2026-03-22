@@ -26,8 +26,8 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+      List.generate(5, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(5, (_) => FocusNode());
 
   bool _isLoading = false;
   bool _recaptchaChecked = false;
@@ -47,10 +47,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   String get _otp => _controllers.map((c) => c.text).join();
 
   Future<void> _handleVerify() async {
-    if (_otp.length < 6) {
+    if (_otp.length < 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter the 6-digit code'),
+          content: Text('Please enter the 5-digit code'),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
         ),
@@ -212,7 +212,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 // ── Subtitle ─────────────────────────────────
                 RichText(
                   text: TextSpan(
-                    text: 'We sent a 6-digit code to ',
+                    text: 'We sent a 5-digit code to ',
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       color: Colors.white.withValues(alpha: 0.6),
@@ -248,8 +248,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     children: [
                       // ── 6 OTP boxes ──────────────────────────
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(6, (i) => _buildOtpBox(i)),
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(5, (i) => _buildOtpBox(i)),
                       ),
 
                       const SizedBox(height: 28),
@@ -391,8 +391,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   Widget _buildOtpBox(int index) {
     return SizedBox(
-      width: 46,
-      height: 56,
+      width: 52,
+      height: 60,
       child: TextFormField(
         controller: _controllers[index],
         focusNode: _focusNodes[index],
@@ -402,32 +402,31 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           FilteringTextInputFormatter.digitsOnly,
           LengthLimitingTextInputFormatter(1),
         ],
-        style: GoogleFonts.outfit(
-          fontSize: 22,
+        style: const TextStyle(
+          fontSize: 24,
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
         decoration: InputDecoration(
           filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.05),
+          fillColor: Colors.white.withValues(alpha: 0.08),
           counterText: '',
+          contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide:
-                BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide:
-                const BorderSide(color: Color(0xFF6C63FF), width: 1.5),
+            borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.5),
           ),
         ),
         onChanged: (value) {
-          if (value.isNotEmpty && index < 5) {
+          if (value.isNotEmpty && index < 4) {
             _focusNodes[index + 1].requestFocus();
           }
           if (value.isEmpty && index > 0) {

@@ -57,4 +57,21 @@ class ApiClient {
 
     _initialized = true;
   }
+
+  /// Pings the server to wake it up (Render free tier cold start fix).
+  /// Call this at app startup — fire and forget.
+  Future<void> warmUp() async {
+    try {
+      await dio.get(
+        AppConfig.healthPath,
+        options: Options(
+          sendTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60),
+        ),
+      );
+      debugPrint('✅ Server warmed up');
+    } catch (_) {
+      debugPrint('⚠️ Server warm-up failed — may be cold starting');
+    }
+  }
 }

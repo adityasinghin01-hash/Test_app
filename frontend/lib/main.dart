@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -22,6 +24,7 @@ void main() async {
 
   // 4. Initialize API singletons
   ApiClient.instance.init();
+  unawaited(ApiClient.instance.warmUp());
 
   // 5. Create the Riverpod container to manually manage some early state
   final container = ProviderContainer();
