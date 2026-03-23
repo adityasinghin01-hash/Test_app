@@ -46,3 +46,6 @@ app.*.map.json
 
 # Environment variables
 .env
+.flutter-plugins-dependencies*
+flutter_export_environment*.sh
+Generated *.xcconfig
