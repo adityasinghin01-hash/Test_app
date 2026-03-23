@@ -23,6 +23,7 @@ class SignupScreen extends ConsumerStatefulWidget {
 
 class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -35,6 +36,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -82,6 +84,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   /// Backend must have RECAPTCHA_SECRET=6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe
   Future<void> _submitSignup() async {
     await ref.read(authProvider.notifier).signup(
+          name: _nameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
           recaptchaToken: '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe',
@@ -213,6 +216,27 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // ── Name ───────────────────────────────
+                          _buildLabel('Full Name'),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _nameController,
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.next,
+                            style: GoogleFonts.inter(color: Colors.white),
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) return 'Name is required';
+                              if (v.trim().length < 2) return 'Name must be at least 2 characters';
+                              return null;
+                            },
+                            decoration: _inputDecoration(
+                              hint: 'Enter your name',
+                              prefixIcon: Icons.person_outline_rounded,
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
                           // ── Email ──────────────────────────────
                           _buildLabel('Email'),
                           const SizedBox(height: 8),

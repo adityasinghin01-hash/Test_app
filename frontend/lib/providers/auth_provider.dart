@@ -134,6 +134,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // ── Signup ────────────────────────────────────────────
 
   Future<bool> signup({
+    required String name,
     required String email,
     required String password,
     required String recaptchaToken,
@@ -143,6 +144,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final response = await _dio.post(
         AppConfig.signupPath,
         data: {
+          'name': name,
           'email': email,
           'password': password,
           'recaptchaToken': recaptchaToken,

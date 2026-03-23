@@ -23,10 +23,10 @@ class AppConfig {
       '/api/check-verification-status';
 
   // ── Password reset ────────────────────────────────────
-  static const String forgotPasswordPath = '/api/forgot-password';
-  static const String resetPasswordPath = '/api/reset-password';
-  static const String sendOtpPath = '/api/send-otp';
-  static const String verifyOtpPath = '/api/verify-otp';
+  static const String forgotPasswordPath = '/api/password/forgot';
+  static const String resetPasswordPath = '/api/password/reset';
+  static const String sendOtpPath = '/api/password/send-otp';
+  static const String verifyOtpPath = '/api/password/verify-otp';
 
   // ── Protected resources ───────────────────────────────
   static const String profilePath = '/api/profile';
