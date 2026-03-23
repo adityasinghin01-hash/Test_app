@@ -19,7 +19,7 @@ class PasswordService {
     );
   }
 
-  /// `POST /api/reset-password`
+  /// `POST /api/password/reset`
   /// Resets the password using the token from the reset email.
   ///
   /// Note: For this build we use browser-based reset (Option B).
