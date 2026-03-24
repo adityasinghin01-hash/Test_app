@@ -28,12 +28,14 @@ class PasswordService {
   Future<Response> resetPassword({
     required String token,
     required String newPassword,
+    required String confirmPassword,
   }) {
     return _dio.post(
       AppConfig.resetPasswordPath,
       data: {
         'token': token,
         'newPassword': newPassword,
+        'confirmPassword': confirmPassword,
       },
     );
   }

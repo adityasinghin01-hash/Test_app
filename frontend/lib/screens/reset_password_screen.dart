@@ -51,6 +51,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       await PasswordService.instance.resetPassword(
         token: widget.token,
         newPassword: _passwordController.text,
+        confirmPassword: _confirmController.text,
       );
 
       if (mounted) {
